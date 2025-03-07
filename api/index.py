@@ -53,11 +53,11 @@ hotels = [
     )
 ]
 
-@app.get("/")
+@app.get("/api")
 async def root():
     return {"message": "API работает!"}
 
-@app.get("/hotels", response_model=list[SHotel])
+@app.get("/api/hotels", response_model=list[SHotel])
 async def get_hotels(
         location: str,
         date_from: date,
