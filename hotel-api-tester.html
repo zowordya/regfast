@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тестирование API Отеля</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .panel {
+            flex: 1;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        pre {
+            background-color: #f8f8f8;
+            padding: 10px;
+            border-radius: 4px;
+            overflow: auto;
+            max-height: 400px;
+        }
+        .result {
+            margin-top: 20px;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        .tab.active {
+            border-bottom: 2px solid #4CAF50;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+        .bookings-list, .hotels-list {
+            list-style: none;
+            padding: 0;
+        }
+        .bookings-list li, .hotels-list li {
+            background: #f9f9f9;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 3px solid #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <h1>Тестирование API Отеля</h1>
+    
+    <div class="tabs">
+        <div class="tab active" data-tab="hotels">Отели</div>
+        <div class="tab" data-tab="bookings">Бронирования</div>
+    </div>
+    
+    <div class="container">
+        <!-- Отели -->
+        <div class="tab-content active" id="hotels-content">
+            <div class="panel">
+                <h2>Поиск отелей</h2>
+                <form id="hotels-form">
+                    <div class="form-group">
+                        <label for="location">Местоположение:</label>
+                        <input type="text" id="location" required placeholder="Москва">
+                    </div>
+                    <div class="form-group">
+                        <label for="date-from">Дата заезда:</label>
+                        <input type="date" id="date-from" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="date-to">Дата выезда:</label>
+                        <input type="date" id="date-to" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="quantity">Количество гостей:</label>
+                        <input type="number" id="quantity" min="1" value="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="stars">Количество звезд:</label>
+                        <select id="stars">
+                            <option value="">Любое</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="has-spa">Наличие СПА:</label>
+                        <select id="has-spa">
+                            <option value="">Без разницы</option>
+                            <option value="true">Есть</option>
+                            <option value="false">Нет</option>
+                        </select>
+                    </div>
+                    <button type="submit">Найти отели</button>
+                </form>
+                <div id="hotels-error" class="error"></div>
+            </div>
+            
+            <div class="panel">
+                <h2>Результаты</h2>
+                <div id="hotels-result" class="result">
+                    <p>Здесь будут отображены найденные отели</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Бронирования -->
+        <div class="tab-content" id="bookings-content">
+            <div class="panel">
+                <h2>Управление бронированиями</h2>
+                <div class="form-group">
+                    <label for="booking-action">Действие:</label>
+                    <select id="booking-action">
+                        <option value="list">Список бронирований</option>
+                        <option value="get">Получить бронирование</option>
+                        <option value="create">Создать бронирование</option>
+                    </select>
+                </div>
+                
+                <!-- Получить бронирование по ID -->
+                <div id="get-booking-form" style="display: none;">
+                    <div class="form-group">
+                        <label for="booking-id">ID бронирования:</label>
+                        <input type="text" id="booking-id" placeholder="UUID бронирования">
+                    </div>
+                    <button id="get-booking-btn">Получить бронирование</button>
+                </div>
+                
+                <!-- Создать бронирование -->
+                <div id="create-booking-form" style="display: none;">
+                    <div class="form-group">
+                        <label for="booking-hotel-id">ID отеля:</label>
+                        <input type="text" id="booking-hotel-id" placeholder="UUID отеля">
+                    </div>
+                    <div class="form-group">
+                        <label for="booking-room-id">Номер комнаты:</label>
+                        <input type="number" id="booking-room-id" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="booking-date-from">Дата заезда:</label>
+                        <input type="date" id="booking-date-from">
+                    </div>
+                    <div class="form-group">
+                        <label for="booking-date-to">Дата выезда:</label>
+                        <input type="date" id="booking-date-to">
+                    </div>
+                    <button id="create-booking-btn">Создать бронирование</button>
+                </div>
+                
+                <!-- Список бронирований -->
+                <div id="list-booking-form">
+                    <button id="list-bookings-btn">Получить список бронирований</button>
+                </div>
+                
+                <div id="bookings-error" class="error"></div>
+            </div>
+            
+            <div class="panel">
+                <h2>Результаты</h2>
+                <div id="bookings-result" class="result">
+                    <p>Здесь будут отображены данные о бронированиях</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Базовый URL API
+            const API_URL = 'http://localhost:8000';
+            
+            // Настройка переключения вкладок
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Сначала удаляем активный класс у всех
+                    tabs.forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    // Затем добавляем активный класс нужным элементам
+                    tab.classList.add('active');
+                    const tabName = tab.dataset.tab;
+                    document.getElementById(`${tabName}-content`).classList.add('active');
+                });
+            });
+            
+            // Форма поиска отелей
+            const hotelsForm = document.getElementById('hotels-form');
+            hotelsForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const location = document.getElementById('location').value;
+                const dateFrom = document.getElementById('date-from').value;
+                const dateTo = document.getElementById('date-to').value;
+                const quantity = document.getElementById('quantity').value;
+                const stars = document.getElementById('stars').value;
+                const hasSpa = document.getElementById('has-spa').value;
+                
+                // Построение URL с параметрами
+                let url = `${API_URL}/hotels?location=${encodeURIComponent(location)}&date_from=${dateFrom}&date_to=${dateTo}&quantity=${quantity}`;
+                if (stars) url += `&stars=${stars}`;
+                if (hasSpa) url += `&has_spa=${hasSpa}`;
+                
+                // Запрос к API
+                fetch(url)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Ошибка HTTP: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        displayHotels(data);
+                        document.getElementById('hotels-error').textContent = '';
+                    })
+                    .catch(error => {
+                        document.getElementById('hotels-error').textContent = `Ошибка: ${error.message}`;
+                        document.getElementById('hotels-result').innerHTML = '<p>Ошибка при получении данных</p>';
+                    });
+            });
+            
+            // Отображение отелей
+            function displayHotels(hotels) {
+                const resultDiv = document.getElementById('hotels-result');
+                if (hotels.length === 0) {
+                    resultDiv.innerHTML = '<p>Отели не найдены</p>';
+                    return;
+                }
+                
+                let html = '<h3>Найдено отелей: ' + hotels.length + '</h3>';
+                html += '<ul class="hotels-list">';
+                
+                hotels.forEach(hotel => {
+                    html += `
+                        <li>
+                            <h4>${hotel.name} (${hotel.stars}⭐)</h4>
+                            <p><strong>Местоположение:</strong> ${hotel.location}</p>
+                            <p><strong>СПА:</strong> ${hotel.has_spa ? 'Есть' : 'Нет'}</p>
+                            <p><strong>ID:</strong> ${hotel.id}</p>
+                            <p><strong>Номера:</strong> ${hotel.rooms.join(', ')}</p>
+                        </li>
+                    `;
+                });
+                
+                html += '</ul>';
+                resultDiv.innerHTML = html;
+            }
+            
+            // Переключатель форм бронирования
+            const bookingAction = document.getElementById('booking-action');
+            bookingAction.addEventListener('change', function() {
+                const action = this.value;
+                document.getElementById('get-booking-form').style.display = 'none';
+                document.getElementById('create-booking-form').style.display = 'none';
+                document.getElementById('list-booking-form').style.display = 'none';
+                
+                document.getElementById(`${action}-booking-form`).style.display = 'block';
+            });
+            
+            // Получить список бронирований
+            document.getElementById('list-bookings-btn').addEventListener('click', function() {
+                fetch(`${API_URL}/bookings`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Ошибка HTTP: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        displayBookings(data);
+                        document.getElementById('bookings-error').textContent = '';
+                    })
+                    .catch(error => {
+                        document.getElementById('bookings-error').textContent = `Ошибка: ${error.message}`;
+                    });
+            });
+            
+            // Получить бронирование по ID
+            document.getElementById('get-booking-btn').addEventListener('click', function() {
+                const bookingId = document.getElementById('booking-id').value;
+                if (!bookingId) {
+                    document.getElementById('bookings-error').textContent = 'Введите ID бронирования';
+                    return;
+                }
+                
+                fetch(`${API_URL}/bookings/${bookingId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Ошибка HTTP: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        displayBooking(data);
+                        document.getElementById('bookings-error').textContent = '';
+                    })
+                    .catch(error => {
+                        document.getElementById('bookings-error').textContent = `Ошибка: ${error.message}`;
+                    });
+            });
+            
+            // Создать бронирование
+            document.getElementById('create-booking-btn').addEventListener('click', function() {
+                const hotelId = document.getElementById('booking-hotel-id').value;
+                const roomId = document.getElementById('booking-room-id').value;
+                const dateFrom = document.getElementById('booking-date-from').value;
+                const dateTo = document.getElementById('booking-date-to').value;
+                
+                if (!hotelId || !roomId || !dateFrom || !dateTo) {
+                    document.getElementById('bookings-error').textContent = 'Заполните все поля';
+                    return;
+                }
+                
+                const bookingData = {
+                    hotel_id: hotelId,
+                    room_id: parseInt(roomId),
+                    date_from: dateFrom,
+                    date_to: dateTo
+                };
+                
+                fetch(`${API_URL}/bookings`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(bookingData)
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Ошибка HTTP: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        displayBooking(data);
+                        document.getElementById('bookings-error').textContent = '';
+                    })
+                    .catch(error => {
+                        document.getElementById('bookings-error').textContent = `Ошибка: ${error.message}`;
+                    });
+            });
+            
+            // Отображение списка бронирований
+            function displayBookings(bookings) {
+                const resultDiv = document.getElementById('bookings-result');
+                if (bookings.length === 0) {
+                    resultDiv.innerHTML = '<p>Бронирования не найдены</p>';
+                    return;
+                }
+                
+                let html = '<h3>Найдено бронирований: ' + bookings.length + '</h3>';
+                html += '<ul class="bookings-list">';
+                
+                bookings.forEach(booking => {
+                    html += `
+                        <li>
+                            <h4>Бронирование #${booking.id}</h4>
+                            <p><strong>Отель:</strong> ${booking.hotel_id}</p>
+                            <p><strong>Комната:</strong> ${booking.room_id}</p>
+                            <p><strong>Заезд:</strong> ${booking.date_from}</p>
+                            <p><strong>Выезд:</strong> ${booking.date_to}</p>
+                            <p><strong>Стоимость:</strong> ${booking.price} руб.</p>
+                            <p><strong>Всего дней:</strong> ${booking.total_days}</p>
+                            <p><strong>Всего цена:</strong> ${booking.total_cost} руб.</p>
+                        </li>
+                    `;
+                });
+                
+                html += '</ul>';
+                resultDiv.innerHTML = html;
+            }
+            
+            // Отображение одного бронирования
+            function displayBooking(booking) {
+                const resultDiv = document.getElementById('bookings-result');
+                let html = `
+                    <h3>Информация о бронировании</h3>
+                    <div class="booking-card">
+                        <h4>Бронирование #${booking.id}</h4>
+                        <p><strong>Отель:</strong> ${booking.hotel_id}</p>
+                        <p><strong>Комната:</strong> ${booking.room_id}</p>
+                        <p><strong>Заезд:</strong> ${booking.date_from}</p>
+                        <p><strong>Выезд:</strong> ${booking.date_to}</p>
+                        <p><strong>Стоимость:</strong> ${booking.price} руб.</p>
+                        <p><strong>Всего дней:</strong> ${booking.total_days}</p>
+                        <p><strong>Всего цена:</strong> ${booking.total_cost} руб.</p>
+                    </div>
+                `;
+                resultDiv.innerHTML = html;
+            }
+            
+            // Установка сегодняшней даты по умолчанию
+            const today = new Date();
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            function formatDate(date) {
+                return date.toISOString().split('T')[0];
+            }
+            
+            document.getElementById('date-from').value = formatDate(today);
+            document.getElementById('date-to').value = formatDate(tomorrow);
+            document.getElementById('booking-date-from').value = formatDate(today);
+            document.getElementById('booking-date-to').value = formatDate(tomorrow);
+        });
+    </script>
+</body>
+</html>
