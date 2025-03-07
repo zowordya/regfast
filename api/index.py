@@ -4,6 +4,7 @@ from datetime import date, timedelta
 from pydantic import BaseModel, Field
 from uuid import uuid4, UUID
 from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 
 app = FastAPI()
 
@@ -52,8 +53,12 @@ hotels = [
     )
 ]
 
-@app.get("/api/hotels", response_model=list[SHotel])
-def get_hotels(
+@app.get("/")
+async def root():
+    return {"message": "API работает!"}
+
+@app.get("/hotels", response_model=list[SHotel])
+async def get_hotels(
         location: str,
         date_from: date,
         date_to: date,
@@ -74,8 +79,4 @@ def get_hotels(
                 if has_spa is None or hotel.has_spa == has_spa:
                     filtered_hotels.append(hotel)
     
-    return filtered_hotels
-
-@app.get("/api")
-def read_root():
-    return {"message": "API работает!"} 
+    return filtered_hotels 
