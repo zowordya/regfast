@@ -130,7 +130,7 @@ hotels = [
         name="Элеон",
         location="Санкт-Петербург",
         stars=5,
-        rooms=[10, 11, 12],
+        rooms=[9, 11, 12],
         has_spa=True
     ),
 ]
