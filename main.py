@@ -124,5 +124,13 @@ hotels = [
         stars=5,
         rooms=[20, 21, 22, 23],
         has_spa=True
-    )
+    ),
+    SHotel(
+        id=uuid4(),
+        name="Элеон",
+        location="Санкт-Петербург",
+        stars=5,
+        rooms=[10, 11, 12],
+        has_spa=True
+    ),
 ]
